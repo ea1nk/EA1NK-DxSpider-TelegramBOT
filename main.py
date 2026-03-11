@@ -1,7 +1,8 @@
-import asyncio, os, re, time
+import asyncio, os, re, time, signal
 from collections import deque
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.error import Conflict
 from database import DatabaseManager
 from logic import obtener_banda, detectar_modo_definitivo
 from localestr import get_text
@@ -33,6 +34,7 @@ class DXBot:
         self.call = os.getenv("MY_CALL", "BOT")
         self.debug_telnet = os.getenv("DEBUG_TELNET", "0").lower() in ("1", "true", "yes", "on")
         self.db = DatabaseManager()
+        self.shutdown_event = asyncio.Event()
         
         # Configuración de la App (con bypass de proxy si las variables están vacías)
         self.app = (
@@ -56,6 +58,11 @@ class DXBot:
             await msg.reply_text(text, parse_mode=parse_mode)
 
     async def handle_error(self, update, context):
+        if isinstance(context.error, Conflict):
+            print(f"[ERROR] Conflict detectado: {context.error}")
+            print("[ERROR] Otra instancia del bot está en ejecución. Deteniendo este proceso...")
+            self.shutdown_event.set()
+            return
         print(f"[ERROR] Handler: {context.error}")
 
     def _dbg(self, msg):
@@ -192,7 +199,7 @@ class DXBot:
         return False
 
     async def handle_telnet(self):
-        while True:
+        while not self.shutdown_event.is_set():
             try:
                 self._dbg(f"Intentando conexion a {self.host}:{self.port}...")
                 reader, writer = await asyncio.open_connection(self.host, self.port)
@@ -204,7 +211,7 @@ class DXBot:
                 login_sent = False
                 banner_buffer = ""
                 login_buffer = ""
-                while not login_sent:
+                while not login_sent and not self.shutdown_event.is_set():
                     try:
                         chunk = await asyncio.wait_for(reader.read(1), timeout=30.0)
                     except asyncio.TimeoutError:
@@ -229,6 +236,11 @@ class DXBot:
                         self._dbg(f"Prompt 'login:' detectado. Login enviado con indicativo '{self.call}'")
                         login_sent = True
 
+                if self.shutdown_event.is_set():
+                    writer.close()
+                    await writer.wait_closed()
+                    break
+
                 print(f"[INFO] Conectado a DXSpider en {self.host}")
                 await asyncio.sleep(2)
                 self._dbg("Espera post-login completada (2s) antes de enviar comandos de sesion")
@@ -236,7 +248,7 @@ class DXBot:
                 await writer.drain()
                 self._dbg("Comando enviado al cluster: set/skim")
                 first_line_logged = False
-                while True:
+                while not self.shutdown_event.is_set():
                     line = await reader.readline()
                     if not line:
                         self._dbg("Conexion cerrada por el servidor remoto.")
@@ -298,6 +310,18 @@ class DXBot:
                                 rbn_label = " <b>[RBN]</b>" if is_rbn else ""
                                 txt = get_text('spot', lang, call=dx_call, band=band, mode=mode, freq=freq, comment=clean_comment, rbn_label=rbn_label, time=spot_time, origin=origin)
                                 await self.app.bot.send_message(chat_id=uid, text=txt, parse_mode='HTML')
+                
+                writer.close()
+                await writer.wait_closed()
+            
+            except ConnectionError as e:
+                print(f"[ERROR] Conexion a DXSpider perdida: {e}")
+                print("[INFO] Reconectando en 10 segundos...")
+                await asyncio.sleep(10)
+            except TimeoutError as e:
+                print(f"[ERROR] {e}")
+                print("[INFO] Reconectando en 10 segundos...")
+                await asyncio.sleep(10)
             except Exception as e:
                 print(f"[ERROR] Telnet: {e}")
                 self._dbg("Reintentando conexion en 15 segundos...")
@@ -478,6 +502,17 @@ class DXBot:
         await self._reply(update, get_text('rbn_status', lang, status=status.upper()), parse_mode='HTML')
 
     async def run(self):
+        # Registrar handlers para graceful shutdown
+        loop = asyncio.get_event_loop()
+        
+        def signal_handler(signum, frame):
+            print(f"[INFO] Señal {signal.Signals(signum).name} recibida. Iniciando shutdown graceful...")
+            self.shutdown_event.set()
+        
+        loop.add_signal_handler(signal.SIGTERM, signal_handler, signal.SIGTERM, None)
+        loop.add_signal_handler(signal.SIGINT, signal_handler, signal.SIGINT, None)
+        
+        # Registrar handlers de comandos
         self.app.add_handler(CommandHandler("start", self.handle_start))
         self.app.add_handler(CommandHandler("help", self.handle_help))
         self.app.add_handler(CommandHandler("setfilter", self.handle_setfilter))
@@ -491,7 +526,21 @@ class DXBot:
         await self.app.start()
         await self.app.updater.start_polling()
         print("[INFO] Bot de Telegram iniciado.")
-        await self.handle_telnet()
+        
+        # Ejecutar telnet handler y esperar shutdown
+        try:
+            await asyncio.gather(
+                self.handle_telnet(),
+                self.shutdown_event.wait()
+            )
+        except asyncio.CancelledError:
+            print("[INFO] Bot cancelado.")
+        finally:
+            print("[INFO] Deteniendo bot de Telegram...")
+            await self.app.updater.stop()
+            await self.app.stop()
+            await self.app.shutdown()
+            print("[INFO] Bot detenido correctamente.")
 
 if __name__ == "__main__":
     asyncio.run(DXBot().run())

@@ -12,6 +12,9 @@ CACHE_DUPLICADOS = deque(maxlen=500)
 TIEMPO_EXPIRACION = 600 # 10 minutos
 
 class DXBot:
+    CALL_RE = re.compile(r"^[A-Z0-9][A-Z0-9/.-]{2,}$")
+    RBN_MARKER_RE = re.compile(r"\b(?:RBN|SK[0-9I]MMR|SKIMMER|CWSKIMMER|CW\s+SKIMMER)\b", re.IGNORECASE)
+
     def __init__(self):
         self.token = os.getenv("BOT_TOKEN")
         self.host = os.getenv("SPIDER_HOST", "dxspider")
@@ -64,7 +67,39 @@ class DXBot:
                 if freq and dx_call:
                     return spotter, freq, dx_call, comment
 
+        # PC61 = reemplazo de PC11 con IP extra (misma estructura de spot).
+        if msg.startswith("PC61^"):
+            parts = msg.split("^")
+            if len(parts) >= 9:
+                freq = parts[1].strip()
+                dx_call = parts[2].strip()
+                comment = parts[5].strip()
+                spotter = parts[6].strip()
+                if freq and dx_call:
+                    return spotter, freq, dx_call, comment
+
+        # PC26 = Merge DX info.
+        if msg.startswith("PC26^"):
+            parts = msg.split("^")
+            if len(parts) >= 8:
+                freq = parts[1].strip()
+                dx_call = parts[2].strip()
+                comment = parts[5].strip()
+                spotter = parts[6].strip()
+                if freq and dx_call:
+                    return spotter, freq, dx_call, comment
+
         return None
+
+    @staticmethod
+    def _has_rbn_marker(text):
+        if not text:
+            return False
+        return "-#" in text or bool(DXBot.RBN_MARKER_RE.search(text))
+
+    @staticmethod
+    def _looks_like_rbn(msg):
+        return DXBot._has_rbn_marker(msg)
 
     def es_duplicado(self, dx_call, freq, modo):
         ahora = time.time()
@@ -114,9 +149,9 @@ class DXBot:
                         login_sent = True
 
                 print(f"[INFO] Conectado a DXSpider en {self.host}")
-                writer.write(b"set/rbn on\n")
+                writer.write(b"set/skim on\n")
                 await writer.drain()
-                self._dbg("Comando enviado al cluster: set/rbn on")
+                self._dbg("Comando enviado al cluster: set/skim on")
                 first_line_logged = False
                 while True:
                     line = await reader.readline()
@@ -127,12 +162,37 @@ class DXBot:
                     if self.debug_telnet and not first_line_logged and msg:
                         self._dbg(f"Primer mensaje recibido: {msg}")
                         first_line_logged = True
+
+                    is_supported_pc_spot = msg.startswith("PC11^") or msg.startswith("PC61^") or msg.startswith("PC26^")
+                    if self.debug_telnet and msg.startswith("PC") and not is_supported_pc_spot:
+                        self._dbg(f"Mensaje PC no-PC11 recibido (sin parser dedicado): {msg}")
+
                     parsed_spot = self._parse_spot(msg)
+                    if self.debug_telnet and not parsed_spot and self._looks_like_rbn(msg):
+                        self._dbg(f"Posible RBN no parseado: {msg}")
+
                     if parsed_spot:
+                        if self.debug_telnet:
+                            if msg.startswith("PC11^"):
+                                raw_format = "PC11"
+                            elif msg.startswith("PC61^"):
+                                raw_format = "PC61"
+                            elif msg.startswith("PC26^"):
+                                raw_format = "PC26"
+                            elif msg.startswith("DX de "):
+                                raw_format = "LEGACY"
+                            else:
+                                raw_format = "UNKNOWN"
+                            self._dbg(f"Raw spot parseado [{raw_format}]: {msg}")
+
                         spotter, freq, dx_call, comment = parsed_spot
                         band = obtener_banda(float(freq))
                         mode = detectar_modo_definitivo(freq, comment)
-                        is_rbn = "-#" in spotter or "SKIMMER" in comment.upper()
+                        is_rbn = (
+                            self._has_rbn_marker(spotter)
+                            or self._has_rbn_marker(comment)
+                            or self._has_rbn_marker(msg)
+                        )
 
                         self._dbg(f"Spot detectado: dx={dx_call} freq={freq} band={band} mode={mode} spotter={spotter}")
                         

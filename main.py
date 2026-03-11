@@ -114,6 +114,9 @@ class DXBot:
                         login_sent = True
 
                 print(f"[INFO] Conectado a DXSpider en {self.host}")
+                writer.write(b"set/rbn on\n")
+                await writer.drain()
+                self._dbg("Comando enviado al cluster: set/rbn on")
                 first_line_logged = False
                 while True:
                     line = await reader.readline()

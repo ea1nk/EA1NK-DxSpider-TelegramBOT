@@ -13,6 +13,7 @@ STRINGS = {
             "• /last [CALL] - Ver últimos 10 spots (30 min)\n"
             "• /rbn [on|off] - Activar/Desactivar RBN\n"
             "• /myfilters - Ver filtros activos (pulsa botones para borrar)\n\n"
+            "• /clearallfilters - Borrar todos tus filtros\n\n"
             "ℹ️ <i>Duplicados filtrados cada 10 min.</i>"
         ),
         'filter_error': "❌ Error: Formato incorrecto.\n\n<b>Uso:</b>\n/setfilter &lt;CALL&gt;\n/setfilter &lt;CALL&gt; &lt;bandas&gt;\n/setfilter &lt;CALL&gt; * &lt;modos&gt;\n/setfilter &lt;CALL&gt; &lt;bandas&gt; &lt;modos&gt;",
@@ -21,7 +22,14 @@ STRINGS = {
         'rbn_status': "✅ Spots de RBN ahora: <b>{status}</b>",
         'spot': "🎯 <b>SPOT{rbn_label}</b>\n\n<b>DX:</b> {call}\n<b>Banda:</b> {band}\n<b>Modo:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Hora:</b> {time}\n<b>Origen:</b> {origin}\n<b>Info:</b> <code>{comment}</code>",
         'filter_saved': "✅ Filtro guardado: {call} en {bands} ({mode}).",
-        'no_recent': "<i>No se encontraron spots recientes para {call}.</i>"
+        'no_recent': "<i>No se encontraron spots recientes para {call}.</i>",
+        'filters_cleared': "✅ Se han borrado <b>{count}</b> filtros.",
+        'no_filters_to_clear': "ℹ️ No tienes filtros para borrar.",
+        'clearall_confirm_prompt': "⚠️ Vas a borrar <b>todos</b> tus filtros.\nMientras confirmas, se pausaran temporalmente tus spots.\n\n¿Deseas continuar?",
+        'clearall_confirm_yes': "✅ Confirmar",
+        'clearall_confirm_no': "❌ Cancelar",
+        'clearall_cancelled': "✅ Operacion cancelada. Tus spots vuelven a estar activos.",
+        'clearall_expired': "ℹ️ La confirmacion ha expirado. Ejecuta /clearallfilters de nuevo."
     },
     'en': {
         'start': "<b>73, {name}!</b> 🎙️\nWelcome to your DX Alert bot with RBN support.",
@@ -37,6 +45,7 @@ STRINGS = {
             "• /last [CALL] - Show last 10 spots (30 min)\n"
             "• /rbn [on|off] - Enable/Disable RBN\n"
             "• /myfilters - View active filters (press buttons to delete)\n\n"
+            "• /clearallfilters - Remove all your filters\n\n"
             "ℹ️ <i>Duplicates filtered every 10 min.</i>"
         ),
         'filter_error': "❌ Error: Invalid format.\n\n<b>Usage:</b>\n/setfilter &lt;CALL&gt;\n/setfilter &lt;CALL&gt; &lt;bands&gt;\n/setfilter &lt;CALL&gt; * &lt;modes&gt;\n/setfilter &lt;CALL&gt; &lt;bands&gt; &lt;modes&gt;",
@@ -45,7 +54,14 @@ STRINGS = {
         'rbn_status': "✅ RBN spots are now: <b>{status}</b>",
         'spot': "🎯 <b>SPOT{rbn_label}</b>\n\n<b>DX:</b> {call}\n<b>Band:</b> {band}\n<b>Mode:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Time:</b> {time}\n<b>Origin:</b> {origin}\n<b>Info:</b> <code>{comment}</code>",
         'filter_saved': "✅ Filter saved: {call} on {bands} ({mode}).",
-        'no_recent': "<i>No recent spots found for {call}.</i>"
+        'no_recent': "<i>No recent spots found for {call}.</i>",
+        'filters_cleared': "✅ Cleared <b>{count}</b> filters.",
+        'no_filters_to_clear': "ℹ️ You have no filters to clear.",
+        'clearall_confirm_prompt': "⚠️ You are about to remove <b>all</b> your filters.\nWhile this confirmation is pending, your spots are temporarily paused.\n\nDo you want to continue?",
+        'clearall_confirm_yes': "✅ Confirm",
+        'clearall_confirm_no': "❌ Cancel",
+        'clearall_cancelled': "✅ Operation cancelled. Your spot delivery is active again.",
+        'clearall_expired': "ℹ️ Confirmation expired. Run /clearallfilters again."
     },
     'fr': {
         'start': "<b>73, {name}!</b> 🎙️\nBienvenue sur votre bot d'alerte DX.",
@@ -56,7 +72,9 @@ STRINGS = {
         'rbn_status': "✅ Spots RBN: <b>{status}</b>",
         'spot': "🎯 <b>SPOT{rbn_label}</b>\n\n<b>DX:</b> {call}\n<b>Bande:</b> {band}\n<b>Mode:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Heure:</b> {time}\n<b>Origine:</b> {origin}\n<b>Info:</b> <code>{comment}</code>",
         'filter_saved': "✅ Filtre enregistré: {call} ({mode}).",
-        'no_recent': "<i>Aucun spot récent trouvé pour {call}.</i>"
+        'no_recent': "<i>Aucun spot récent trouvé pour {call}.</i>",
+        'filters_cleared': "✅ Cleared <b>{count}</b> filters.",
+        'no_filters_to_clear': "ℹ️ You have no filters to clear."
     },
     'it': {
         'start': "<b>73, {name}!</b> 🎙️\nBenvenuto nel tuo bot DX.",
@@ -67,7 +85,9 @@ STRINGS = {
         'rbn_status': "✅ Spots RBN: <b>{status}</b>",
         'spot': "🎯 <b>SPOT{rbn_label}</b>\n\n<b>DX:</b> {call}\n<b>Banda:</b> {band}\n<b>Modo:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Ora:</b> {time}\n<b>Origine:</b> {origin}\n<b>Info:</b> <code>{comment}</code>",
         'filter_saved': "✅ Filtro salvato: {call} ({mode}).",
-        'no_recent': "<i>Nessun spot trovato per {call}.</i>"
+        'no_recent': "<i>Nessun spot trovato per {call}.</i>",
+        'filters_cleared': "✅ Cleared <b>{count}</b> filters.",
+        'no_filters_to_clear': "ℹ️ You have no filters to clear."
     },
     'de': {
         'start': "<b>73, {name}!</b> 🎙️\nWillkommen beim DX-Bot.",
@@ -78,7 +98,9 @@ STRINGS = {
         'rbn_status': "✅ RBN-Spots: <b>{status}</b>",
         'spot': "🎯 <b>SPOT{rbn_label}</b>\n\n<b>DX:</b> {call}\n<b>Band:</b> {band}\n<b>Modus:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Zeit:</b> {time}\n<b>Ursprung:</b> {origin}\n<b>Info:</b> <code>{comment}</code>",
         'filter_saved': "✅ Filter gespeichert: {call} ({mode}).",
-        'no_recent': "<i>Keine aktuellen Spots für {call} gefunden.</i>"
+        'no_recent': "<i>Keine aktuellen Spots für {call} gefunden.</i>",
+        'filters_cleared': "✅ Cleared <b>{count}</b> filters.",
+        'no_filters_to_clear': "ℹ️ You have no filters to clear."
     },
     'pt': {
         'start': "<b>73, {name}!</b> 🎙️\nBem-vindo ao bot DX.",
@@ -89,7 +111,9 @@ STRINGS = {
         'rbn_status': "✅ Spots RBN: <b>{status}</b>",
         'spot': "🎯 <b>SPOT{rbn_label}</b>\n\n<b>DX:</b> {call}\n<b>Banda:</b> {band}\n<b>Modo:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Hora:</b> {time}\n<b>Origem:</b> {origin}\n<b>Info:</b> <code>{comment}</code>",
         'filter_saved': "✅ Filtro salvo: {call} ({mode}).",
-        'no_recent': "<i>Não foram encontrados spots para {call}.</i>"
+        'no_recent': "<i>Não foram encontrados spots para {call}.</i>",
+        'filters_cleared': "✅ Cleared <b>{count}</b> filters.",
+        'no_filters_to_clear': "ℹ️ You have no filters to clear."
     }
 }
 

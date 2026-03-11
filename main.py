@@ -11,6 +11,7 @@ from telegram.request import HTTPXRequest
 # Caché de duplicados: (huella, timestamp)
 CACHE_DUPLICADOS = deque(maxlen=500)
 TIEMPO_EXPIRACION = 600 # 10 minutos
+CLEARALL_CONFIRM_TIMEOUT = 300  # 5 minutos
 
 class DXBot:
     CALL_RE = re.compile(r"^[A-Z0-9][A-Z0-9/.-]{2,}$")
@@ -35,6 +36,8 @@ class DXBot:
         self.debug_telnet = os.getenv("DEBUG_TELNET", "0").lower() in ("1", "true", "yes", "on")
         self.db = DatabaseManager()
         self.shutdown_event = asyncio.Event()
+        # user_id -> expiry timestamp. While present, spot delivery is paused for that user.
+        self.pending_clear_confirmations = {}
         
         # Configuración de la App (con bypass de proxy si las variables están vacías)
         self.app = (
@@ -198,6 +201,21 @@ class DXBot:
         CACHE_DUPLICADOS.append((huella, ahora))
         return False
 
+    def _set_clear_pending(self, user_id):
+        self.pending_clear_confirmations[user_id] = time.time() + CLEARALL_CONFIRM_TIMEOUT
+
+    def _clear_pending(self, user_id):
+        self.pending_clear_confirmations.pop(user_id, None)
+
+    def _is_clear_pending(self, user_id):
+        expiry = self.pending_clear_confirmations.get(user_id)
+        if not expiry:
+            return False
+        if time.time() > expiry:
+            self.pending_clear_confirmations.pop(user_id, None)
+            return False
+        return True
+
     async def handle_telnet(self):
         while not self.shutdown_event.is_set():
             try:
@@ -307,6 +325,8 @@ class DXBot:
                             users = self.db.find_interested_users(dx_call, band, mode, is_rbn)
                             self._dbg(f"Usuarios coincidentes para {dx_call}: {len(users)}")
                             for uid, lang in users:
+                                if self._is_clear_pending(uid):
+                                    continue
                                 rbn_label = " <b>[RBN]</b>" if is_rbn else ""
                                 txt = get_text('spot', lang, call=dx_call, band=band, mode=mode, freq=freq, comment=clean_comment, rbn_label=rbn_label, time=spot_time, origin=origin)
                                 await self.app.bot.send_message(chat_id=uid, text=txt, parse_mode='HTML')
@@ -458,6 +478,28 @@ class DXBot:
         await query.answer()
         
         data = query.data
+        if data == "clear_all_confirm":
+            lang = self._get_lang(update)
+            user_id = update.effective_user.id
+            if not self._is_clear_pending(user_id):
+                await query.edit_message_text(get_text('clearall_expired', lang), parse_mode='HTML')
+                return
+
+            deleted = self.db.delete_all_filters(user_id)
+            self._clear_pending(user_id)
+            if deleted > 0:
+                await query.edit_message_text(get_text('filters_cleared', lang, count=deleted), parse_mode='HTML')
+            else:
+                await query.edit_message_text(get_text('no_filters_to_clear', lang), parse_mode='HTML')
+            return
+
+        if data == "clear_all_cancel":
+            lang = self._get_lang(update)
+            user_id = update.effective_user.id
+            self._clear_pending(user_id)
+            await query.edit_message_text(get_text('clearall_cancelled', lang), parse_mode='HTML')
+            return
+
         if not data.startswith("delete_filter:"):
             return
         
@@ -493,6 +535,20 @@ class DXBot:
         else:
             await self._reply(update, get_text('no_recent', lang, call=call), parse_mode='HTML')
 
+    async def handle_clearallfilters(self, update, context):
+        lang = self._get_lang(update)
+        user_id = update.effective_user.id
+        self._set_clear_pending(user_id)
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(get_text('clearall_confirm_yes', lang), callback_data="clear_all_confirm"),
+                InlineKeyboardButton(get_text('clearall_confirm_no', lang), callback_data="clear_all_cancel"),
+            ]
+        ])
+        msg = update.effective_message
+        if msg:
+            await msg.reply_text(get_text('clearall_confirm_prompt', lang), parse_mode='HTML', reply_markup=keyboard)
+
     async def handle_rbn(self, update, context):
         lang = self._get_lang(update)
         if not context.args or context.args[0].lower() not in ["on", "off"]:
@@ -517,6 +573,7 @@ class DXBot:
         self.app.add_handler(CommandHandler("help", self.handle_help))
         self.app.add_handler(CommandHandler("setfilter", self.handle_setfilter))
         self.app.add_handler(CommandHandler("myfilters", self.handle_myfilters))
+        self.app.add_handler(CommandHandler("clearallfilters", self.handle_clearallfilters))
         self.app.add_handler(CommandHandler("last", self.handle_last))
         self.app.add_handler(CommandHandler("rbn", self.handle_rbn))
         self.app.add_handler(CallbackQueryHandler(self.handle_delete_filter_button))

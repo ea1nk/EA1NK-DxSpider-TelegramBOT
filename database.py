@@ -81,6 +81,11 @@ class DatabaseManager:
         self.conn.commit()
         return c.rowcount > 0
 
+    def delete_all_filters(self, u_id):
+        c = self.conn.execute("DELETE FROM filtros WHERE user_id = ?", (u_id,))
+        self.conn.commit()
+        return c.rowcount
+
     def update_rbn_preference(self, u_id, status):
         val = 1 if status == "on" else 0
         self.conn.execute(

@@ -30,6 +30,11 @@ https://github.com/ea1nk/EA1NK-Docker-DxSpider
 - Access to a DXSpider host and port.
 - Optional: MySQL access to the cluster spots database (required for /last).
 
+## Quick BotFather guides
+
+- English: [HOW_TO_TELEGRAM_BOT_EN,md](HOW_TO_TELEGRAM_BOT_EN,md)
+- Espanol: [TELEGRAM_BOT_COMO.md](TELEGRAM_BOT_COMO.md)
+
 Python dependencies are listed in requirements.txt:
 
 - python-telegram-bot==21.0.1

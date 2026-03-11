@@ -1,0 +1,68 @@
+# How to Create a Telegram Bot with BotFather
+
+This is a simple guide to create your Telegram bot in a few minutes.
+
+## 1. Open BotFather
+1. Open Telegram.
+2. Search for **BotFather** (official account with a blue check).
+3. Start the chat.
+
+## 2. Create a New Bot
+1. Send this command:
+   `/newbot`
+2. BotFather will ask for:
+   - **Bot name** (display name, can include spaces)
+   - **Username** (must end with `bot`, for example: `my_radio_helper_bot`)
+
+## 3. Copy the Bot Token
+After creation, BotFather gives you an **HTTP API token**.
+
+- Save it in a safe place.
+- Do **not** share it publicly.
+- If leaked, regenerate it with BotFather (`/revoke` or token reset option).
+
+## 4. Test Your Bot
+1. Open your bot chat from the link BotFather gives you.
+2. Press **Start** or send `/start`.
+3. If your code is running, your bot should answer.
+
+## 5. Optional Basic Settings in BotFather
+Useful commands:
+- `/setdescription` -> Set bot description.
+- `/setabouttext` -> Set short about text.
+- `/setuserpic` -> Set bot profile picture.
+- `/setcommands` -> Add menu commands (example: `start`, `help`).
+
+## 6. Add Bot to a Group (Optional)
+1. Add your bot to the group.
+2. If you want it to read all group messages, disable privacy mode:
+   - In BotFather: `/setprivacy`
+   - Select your bot
+   - Choose **Disable**
+
+## 7. Keep It Secure
+- Store your token in environment variables (for example `.env`).
+- Never hardcode tokens in public repositories.
+- Rotate token if you suspect exposure.
+
+## 8. Quick Setup for This Project
+This repository reads these environment variables:
+
+- `BOT_TOKEN` (required): your Telegram token from BotFather.
+- `SPIDER_HOST` (optional): DXSpider host. Default is `dxspider`.
+- `SPIDER_PORT` (optional): DXSpider port. Default is `23`.
+- `MY_CALL` (optional): callsign used by the bot. Default is `BOT`.
+- `HTTPS_PROXY` (optional): proxy URL if your network requires it.
+
+Example:
+
+```bash
+export BOT_TOKEN="your_telegram_token"
+export SPIDER_HOST="dxspider"
+export SPIDER_PORT="23"
+export MY_CALL="BOT"
+python main.py
+```
+
+---
+Done. Your Telegram bot is now created and ready to connect to your application.

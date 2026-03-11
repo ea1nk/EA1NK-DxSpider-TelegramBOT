@@ -1,0 +1,23 @@
+services:
+  dx-telegram-bot:
+    build: .
+    container_name: dx_bot_service
+    restart: always
+    environment:
+      - BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN
+      - SPIDER_HOST=YOUR_SPIDER_HOST
+      - SPIDER_PORT=7300
+      - MY_CALL=YOUR_CALLSIGN
+      - DEBUG_TELNET=0
+      - PYTHONUNBUFFERED=1
+      - CLUSTER_DB_HOST=spider_database
+      - CLUSTER_DB_NAME=${CLUSTER_DB_NAME}
+      - CLUSTER_DB_USER=${CLUSTER_DB_USER}
+      - CLUSTER_DB_PASS=${CLUSTER_DB_PASS}
+      - HTTP_PROXY=
+      - HTTPS_PROXY=
+      - http_proxy=
+      - https_proxy=
+      - NO_PROXY=localhost,127.0.0.1,dxspider,dxspider-db,spider_database
+    volumes:
+      - ./bot_data:/app/data

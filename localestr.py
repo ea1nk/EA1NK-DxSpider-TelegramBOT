@@ -19,7 +19,7 @@ STRINGS = {
         'invalid_bands': "❌ Bandas inválidas. Usa: 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF",
         'invalid_modes': "❌ Modos inválidos. Usa: SSB,CW,DIGI,FT8",
         'rbn_status': "✅ Spots de RBN ahora: <b>{status}</b>",
-        'spot': "🎯 <b>SPOT</b>\n\n<b>DX:</b> {call}\n<b>Banda:</b> {band}\n<b>Modo:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Info:</b> <code>{comment}</code>",
+        'spot': "🎯 <b>SPOT{rbn_label}</b>\n\n<b>DX:</b> {call}\n<b>Banda:</b> {band}\n<b>Modo:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Hora:</b> {time}\n<b>Origen:</b> {origin}\n<b>Info:</b> <code>{comment}</code>",
         'filter_saved': "✅ Filtro guardado: {call} en {bands} ({mode}).",
         'no_recent': "<i>No se encontraron spots recientes para {call}.</i>"
     },
@@ -43,7 +43,7 @@ STRINGS = {
         'invalid_bands': "❌ Invalid bands. Use: 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF",
         'invalid_modes': "❌ Invalid modes. Use: SSB,CW,DIGI,FT8",
         'rbn_status': "✅ RBN spots are now: <b>{status}</b>",
-        'spot': "🎯 <b>SPOT</b>\n\n<b>DX:</b> {call}\n<b>Band:</b> {band}\n<b>Mode:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Info:</b> <code>{comment}</code>",
+        'spot': "🎯 <b>SPOT{rbn_label}</b>\n\n<b>DX:</b> {call}\n<b>Band:</b> {band}\n<b>Mode:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Time:</b> {time}\n<b>Origin:</b> {origin}\n<b>Info:</b> <code>{comment}</code>",
         'filter_saved': "✅ Filter saved: {call} on {bands} ({mode}).",
         'no_recent': "<i>No recent spots found for {call}.</i>"
     },
@@ -54,7 +54,7 @@ STRINGS = {
         'invalid_bands': "❌ Bandes invalides. Utilisez: 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF",
         'invalid_modes': "❌ Modes invalides. Utilisez: SSB,CW,DIGI,FT8",
         'rbn_status': "✅ Spots RBN: <b>{status}</b>",
-        'spot': "🎯 <b>SPOT</b>\n\n<b>DX:</b> {call}\n<b>Bande:</b> {band}\n<b>Mode:</b> {mode}",
+        'spot': "🎯 <b>SPOT{rbn_label}</b>\n\n<b>DX:</b> {call}\n<b>Bande:</b> {band}\n<b>Mode:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Heure:</b> {time}\n<b>Origine:</b> {origin}\n<b>Info:</b> <code>{comment}</code>",
         'filter_saved': "✅ Filtre enregistré: {call} ({mode}).",
         'no_recent': "<i>Aucun spot récent trouvé pour {call}.</i>"
     },
@@ -65,7 +65,7 @@ STRINGS = {
         'invalid_bands': "❌ Bande non valide. Usa: 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF",
         'invalid_modes': "❌ Modi non validi. Usa: SSB,CW,DIGI,FT8",
         'rbn_status': "✅ Spots RBN: <b>{status}</b>",
-        'spot': "🎯 <b>SPOT</b>\n\n<b>DX:</b> {call}\n<b>Banda:</b> {band}\n<b>Modo:</b> {mode}",
+        'spot': "🎯 <b>SPOT{rbn_label}</b>\n\n<b>DX:</b> {call}\n<b>Banda:</b> {band}\n<b>Modo:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Ora:</b> {time}\n<b>Origine:</b> {origin}\n<b>Info:</b> <code>{comment}</code>",
         'filter_saved': "✅ Filtro salvato: {call} ({mode}).",
         'no_recent': "<i>Nessun spot trovato per {call}.</i>"
     },
@@ -76,7 +76,7 @@ STRINGS = {
         'invalid_bands': "❌ Ungültige Bänder. Verwenden Sie: 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF",
         'invalid_modes': "❌ Ungültige Modi. Verwenden Sie: SSB,CW,DIGI,FT8",
         'rbn_status': "✅ RBN-Spots: <b>{status}</b>",
-        'spot': "🎯 <b>SPOT</b>\n\n<b>DX:</b> {call}\n<b>Band:</b> {band}\n<b>Modus:</b> {mode}",
+        'spot': "🎯 <b>SPOT{rbn_label}</b>\n\n<b>DX:</b> {call}\n<b>Band:</b> {band}\n<b>Modus:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Zeit:</b> {time}\n<b>Ursprung:</b> {origin}\n<b>Info:</b> <code>{comment}</code>",
         'filter_saved': "✅ Filter gespeichert: {call} ({mode}).",
         'no_recent': "<i>Keine aktuellen Spots für {call} gefunden.</i>"
     },
@@ -87,7 +87,7 @@ STRINGS = {
         'invalid_bands': "❌ Bandas inválidas. Use: 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF",
         'invalid_modes': "❌ Modos inválidos. Use: SSB,CW,DIGI,FT8",
         'rbn_status': "✅ Spots RBN: <b>{status}</b>",
-        'spot': "🎯 <b>SPOT</b>\n\n<b>DX:</b> {call}\n<b>Banda:</b> {band}\n<b>Modo:</b> {mode}",
+        'spot': "🎯 <b>SPOT{rbn_label}</b>\n\n<b>DX:</b> {call}\n<b>Banda:</b> {band}\n<b>Modo:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Hora:</b> {time}\n<b>Origem:</b> {origin}\n<b>Info:</b> <code>{comment}</code>",
         'filter_saved': "✅ Filtro salvo: {call} ({mode}).",
         'no_recent': "<i>Não foram encontrados spots para {call}.</i>"
     }
@@ -96,4 +96,8 @@ STRINGS = {
 def get_text(key, lang_code, **kwargs):
     lang = lang_code[:2] if lang_code and lang_code[:2] in STRINGS else 'en'
     template = STRINGS[lang].get(key, STRINGS['en'][key])
+    kwargs.setdefault('rbn_label', '')
+    kwargs.setdefault('time', 'N/A')
+    kwargs.setdefault('origin', 'N/A')
+    kwargs.setdefault('comment', '')
     return template.format(**kwargs)

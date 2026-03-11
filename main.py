@@ -14,6 +14,12 @@ TIEMPO_EXPIRACION = 600 # 10 minutos
 class DXBot:
     CALL_RE = re.compile(r"^[A-Z0-9][A-Z0-9/.-]{2,}$")
     RBN_MARKER_RE = re.compile(r"\b(?:RBN|SK[0-9I]MMR|SKIMMER|CWSKIMMER|CW\s+SKIMMER)\b", re.IGNORECASE)
+    RBN_ON_BY_RE = re.compile(
+        r"\b(?P<dx>[A-Z0-9/.-]+)\s+on\s+(?P<freq>\d+(?:\.\d+)?)\s+by\s+(?P<spotter>[A-Z0-9/.-]+)\b",
+        re.IGNORECASE,
+    )
+    RBN_KEY_RE = re.compile(r"RBN:\s*SPOT\s*key:\s*'(?P<dx>[^|']+)\|(?P<freq>\d+)'", re.IGNORECASE)
+    TIME_RE = re.compile(r"\b(?P<time>\d{4}Z)\b", re.IGNORECASE)
     RBN_PROGRESS_RE = re.compile(
         r"RBN:\s+SPOT\s+key:\s*'(?P<dx_key>[^|']+)\|(?P<freq_key>\d+)'"
         r"(?:\s*=\s*(?P<dx_eq>[A-Z0-9/.-]+)\s+on\s+(?P<freq_eq>[\d.]+)\s+by\s+(?P<spotter>[A-Z0-9/.-]+))?",
@@ -58,9 +64,9 @@ class DXBot:
 
     @staticmethod
     def _parse_spot(msg):
-        legacy = re.search(r"DX de ([\w-]+):\s+(\d+\.\d+)\s+([\w/]+)\s+(.*)", msg)
+        legacy = re.search(r"DX de\s+([A-Z0-9/#.-]+):\s+(\d+(?:\.\d+)?)\s+([A-Z0-9/#.-]+)\s+(.*)", msg, re.IGNORECASE)
         if legacy:
-            return legacy.group(1), legacy.group(2), legacy.group(3), legacy.group(4)
+            return legacy.group(1).upper(), legacy.group(2), legacy.group(3).upper(), legacy.group(4)
 
         if msg.startswith("PC11^"):
             parts = msg.split("^")
@@ -125,6 +131,57 @@ class DXBot:
     def _looks_like_rbn(msg):
         return DXBot._has_rbn_marker(msg)
 
+    @staticmethod
+    def _parse_rbn_fallback(msg):
+        """Fallback parser for RBN-like text not matched by primary parsers."""
+        on_by = DXBot.RBN_ON_BY_RE.search(msg)
+        if on_by:
+            dx_call = on_by.group("dx").strip().upper()
+            freq = on_by.group("freq").strip()
+            spotter = on_by.group("spotter").strip().upper()
+            if dx_call and freq:
+                return spotter, freq, dx_call, msg.strip()
+
+        key_match = DXBot.RBN_KEY_RE.search(msg)
+        if key_match:
+            dx_call = key_match.group("dx").strip().upper()
+            freq_key = key_match.group("freq").strip()
+            if dx_call and freq_key:
+                return "RBN", str(float(freq_key) / 10.0), dx_call, msg.strip()
+
+        return None
+
+    @staticmethod
+    def _extract_time_and_clean_comment(msg, comment):
+        """Extract spot time and remove duplicated time tokens from comment text."""
+        spot_time = "N/A"
+
+        if msg.startswith("PC11^") or msg.startswith("PC61^") or msg.startswith("PC26^"):
+            parts = msg.split("^")
+            if len(parts) >= 5 and parts[4].strip():
+                spot_time = parts[4].strip().upper()
+
+        if spot_time == "N/A":
+            msg_times = DXBot.TIME_RE.findall(msg)
+            if msg_times:
+                spot_time = msg_times[-1].upper()
+
+        clean_comment = (comment or "").strip()
+        if spot_time != "N/A":
+            clean_comment = re.sub(rf"\b{re.escape(spot_time)}\b", "", clean_comment, flags=re.IGNORECASE)
+        clean_comment = re.sub(r"\s+\d{4}Z\s*$", "", clean_comment, flags=re.IGNORECASE)
+        clean_comment = re.sub(r"@\s*\d{4}Z", "", clean_comment, flags=re.IGNORECASE)
+        clean_comment = re.sub(r"\s{2,}", " ", clean_comment).strip()
+        return spot_time, clean_comment
+
+    @staticmethod
+    def _build_origin_label(spotter, is_rbn):
+        s = (spotter or "UNKNOWN").strip().upper()
+        if is_rbn:
+            s = re.sub(r"-#$", "", s)
+            return f"RBN - {s}"
+        return s
+
     def es_duplicado(self, dx_call, freq, modo):
         ahora = time.time()
         freq_r = round(float(freq) * 2) / 2
@@ -173,9 +230,11 @@ class DXBot:
                         login_sent = True
 
                 print(f"[INFO] Conectado a DXSpider en {self.host}")
-                writer.write(b"set/skim on\n")
+                await asyncio.sleep(2)
+                self._dbg("Espera post-login completada (2s) antes de enviar comandos de sesion")
+                writer.write(b"set/skim\n")
                 await writer.drain()
-                self._dbg("Comando enviado al cluster: set/skim on")
+                self._dbg("Comando enviado al cluster: set/skim")
                 first_line_logged = False
                 while True:
                     line = await reader.readline()
@@ -192,8 +251,14 @@ class DXBot:
                         self._dbg(f"Mensaje PC no-PC11 recibido (sin parser dedicado): {msg}")
 
                     parsed_spot = self._parse_spot(msg)
-                    if self.debug_telnet and not parsed_spot and self._looks_like_rbn(msg):
-                        self._dbg(f"Posible RBN no parseado: {msg}")
+                    used_rbn_fallback = False
+                    if not parsed_spot and self._looks_like_rbn(msg):
+                        parsed_spot = self._parse_rbn_fallback(msg)
+                        if parsed_spot:
+                            used_rbn_fallback = True
+                            self._dbg(f"Fallback RBN parseado: {msg}")
+                        elif self.debug_telnet:
+                            self._dbg(f"Posible RBN no parseado: {msg}")
 
                     if parsed_spot:
                         if self.debug_telnet:
@@ -205,6 +270,8 @@ class DXBot:
                                 raw_format = "PC26"
                             elif "RBN: SPOT key:" in msg.upper():
                                 raw_format = "RBN-TEXT"
+                            elif used_rbn_fallback:
+                                raw_format = "RBN-FALLBACK"
                             elif msg.startswith("DX de "):
                                 raw_format = "LEGACY"
                             else:
@@ -219,6 +286,8 @@ class DXBot:
                             or self._has_rbn_marker(comment)
                             or self._has_rbn_marker(msg)
                         )
+                        spot_time, clean_comment = self._extract_time_and_clean_comment(msg, comment)
+                        origin = self._build_origin_label(spotter, is_rbn)
 
                         self._dbg(f"Spot detectado: dx={dx_call} freq={freq} band={band} mode={mode} spotter={spotter}")
                         
@@ -226,7 +295,8 @@ class DXBot:
                             users = self.db.find_interested_users(dx_call, band, mode, is_rbn)
                             self._dbg(f"Usuarios coincidentes para {dx_call}: {len(users)}")
                             for uid, lang in users:
-                                txt = get_text('spot', lang, call=dx_call, band=band, mode=mode, freq=freq, comment=comment)
+                                rbn_label = " <b>[RBN]</b>" if is_rbn else ""
+                                txt = get_text('spot', lang, call=dx_call, band=band, mode=mode, freq=freq, comment=clean_comment, rbn_label=rbn_label, time=spot_time, origin=origin)
                                 await self.app.bot.send_message(chat_id=uid, text=txt, parse_mode='HTML')
             except Exception as e:
                 print(f"[ERROR] Telnet: {e}")
@@ -391,7 +461,10 @@ class DXBot:
             for s in recientes:
                 b_s = obtener_banda(float(s['freq']))
                 m_s = detectar_modo_definitivo(s['freq'], s['comment'])
-                txt = get_text('spot', lang, call=s['dxcall'], band=b_s, mode=m_s, freq=s['freq'], comment=s['comment'])
+                spot_time = "N/A"
+                if s.get('time'):
+                    spot_time = time.strftime("%H%MZ", time.gmtime(int(s['time'])))
+                txt = get_text('spot', lang, call=s['dxcall'], band=b_s, mode=m_s, freq=s['freq'], comment=s['comment'], rbn_label="", time=spot_time, origin="N/A")
                 await self._reply(update, txt, parse_mode='HTML')
         else:
             await self._reply(update, get_text('no_recent', lang, call=call), parse_mode='HTML')

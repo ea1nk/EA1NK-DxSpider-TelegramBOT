@@ -23,15 +23,31 @@ class DatabaseManager:
         self.conn.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 user_id INTEGER PRIMARY KEY,
-                first_seen_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                first_seen_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                rbn_enabled INTEGER DEFAULT 1
             )""")
+        self._ensure_column("users", "rbn_enabled", "INTEGER DEFAULT 1")
         self.conn.commit()
+
+    def _ensure_column(self, table_name, column_name, column_def):
+        cursor = self.conn.execute(f"PRAGMA table_info({table_name})")
+        existing_columns = {row[1] for row in cursor.fetchall()}
+        if column_name not in existing_columns:
+            self.conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_def}")
 
     def register_user_if_new(self, u_id):
         """Registers user if missing and returns True only on first registration."""
         c = self.conn.execute("INSERT OR IGNORE INTO users (user_id) VALUES (?)", (u_id,))
         self.conn.commit()
         return c.rowcount > 0
+
+    def get_user_rbn_preference(self, u_id):
+        row = self.conn.execute("SELECT rbn_enabled FROM users WHERE user_id = ?", (u_id,)).fetchone()
+        if row is None:
+            self.conn.execute("INSERT INTO users (user_id, rbn_enabled) VALUES (?, 1)", (u_id,))
+            self.conn.commit()
+            return 1
+        return 1 if row[0] else 0
 
     def add_filter(self, u_id, call, bands, modes, lang):
         bands_norm = bands.strip().lower()
@@ -43,10 +59,12 @@ class DatabaseManager:
         if modes_norm in ("ALL", "*", "TODOS"):
             modes_norm = "ALL"
 
+        rbn_enabled = self.get_user_rbn_preference(u_id)
+
         # Corregido: 6 columnas y 6 valores (5 dinámicos + 1 fijo)
         self.conn.execute(
-            "INSERT INTO filtros (user_id, indicativo, bandas, modos, lang, rbn_enabled) VALUES (?,?,?,?,?,1)",
-            (u_id, call.upper(), bands_norm, modes_norm, lang)
+            "INSERT INTO filtros (user_id, indicativo, bandas, modos, lang, rbn_enabled) VALUES (?,?,?,?,?,?)",
+            (u_id, call.upper(), bands_norm, modes_norm, lang, rbn_enabled)
         )
         self.conn.commit()
 
@@ -65,6 +83,10 @@ class DatabaseManager:
 
     def update_rbn_preference(self, u_id, status):
         val = 1 if status == "on" else 0
+        self.conn.execute(
+            "INSERT INTO users (user_id, rbn_enabled) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET rbn_enabled = excluded.rbn_enabled",
+            (u_id, val),
+        )
         self.conn.execute("UPDATE filtros SET rbn_enabled = ? WHERE user_id = ?", (val, u_id))
         self.conn.commit()
 
@@ -101,13 +123,5 @@ class DatabaseManager:
             results = cursor.fetchall()
             db_spider.close()
             return results
-        except:
+        except Exception:
             return []
-
-    def get_user_filters(self, u_id):
-        return self.conn.execute("SELECT id, indicativo, bandas, modos FROM filtros WHERE user_id = ?", (u_id,)).fetchall()
-
-    def delete_filter(self, u_id, f_id):
-        c = self.conn.execute("DELETE FROM filtros WHERE id = ? AND user_id = ?", (f_id, u_id))
-        self.conn.commit()
-        return c.rowcount > 0

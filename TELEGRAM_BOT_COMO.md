@@ -54,6 +54,15 @@ Este repositorio usa estas variables de entorno:
 - `MY_CALL` (opcional): indicativo usado por el bot. Por defecto `BOT`.
 - `HTTPS_PROXY` (opcional): proxy si tu red lo necesita.
 
+Si usas Docker Compose, crea primero tu archivo local:
+
+```bash
+cp .env.example .env
+cp docker-compose.yml.sample docker-compose.yml
+```
+
+Despues edita `.env` en lugar de guardar secretos dentro de `docker-compose.yml`.
+
 Ejemplo:
 
 ```bash

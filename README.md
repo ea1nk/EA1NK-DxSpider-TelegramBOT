@@ -117,27 +117,35 @@ python main.py
 
 This is the recommended deployment mode for this bot.
 
-1. Create your compose file from the sample:
+1. Create your local environment file from the example and set your secrets there:
+
+```bash
+cp .env.example .env
+```
+
+2. Create your compose file from the sample:
 
 ```bash
 cp docker-compose.yml.sample docker-compose.yml
 ```
 
-2. Edit values in docker-compose.yml, especially:
+3. Edit .env, especially:
 
 - BOT_TOKEN
+- SPIDER_HOST
+- SPIDER_PORT
 - MY_CALL
 - CLUSTER_DB_NAME
 - CLUSTER_DB_USER
 - CLUSTER_DB_PASS
 
-3. Start service:
+4. Start service:
 
 ```bash
 docker compose up -d --build
 ```
 
-4. Check logs:
+5. Check logs:
 
 ```bash
 docker compose logs -f dx-telegram-bot

@@ -5,6 +5,9 @@ import os
 class DatabaseManager:
     def __init__(self, db_name="dx_bot.db"):
         self.db_path = os.path.join("/app", "data", db_name)
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        if not os.path.exists(self.db_path):
+            open(self.db_path, "a", encoding="utf-8").close()
         self.conn = sqlite3.connect(self.db_path)
         # Agregamos la columna rbn_enabled (1=ON, 0=OFF)
         self.conn.execute("""

@@ -1,0 +1,6 @@
+# Runtime SQLite database files
+bot_data/dx_bot.db
+data/dx_bot.db
+*.db-journal
+*.db-wal
+*.db-shm

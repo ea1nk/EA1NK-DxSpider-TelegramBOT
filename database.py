@@ -112,15 +112,30 @@ class DatabaseManager:
                 database=os.getenv("CLUSTER_DB_NAME")
             )
             cursor = db_spider.cursor(dictionary=True)
-            query = """
-                SELECT freq, dxcall, comment, time 
-                FROM spots 
-                WHERE (dxcall = %s OR %s = 'ALL')
-                AND (time >= UNIX_TIMESTAMP(NOW() - INTERVAL %s MINUTE))
-                ORDER BY time DESC LIMIT 10
-            """
-            cursor.execute(query, (indicativo, indicativo, minutos))
-            results = cursor.fetchall()
+
+            # DXSpider deployments may store spots in either `spots` or legacy `spot`.
+            results = []
+            table_specs = (
+                ("spots", "dxcall"),
+                ("spot", "spotcall AS dxcall"),
+            )
+            for table_name, call_select in table_specs:
+                query = f"""
+                    SELECT freq, {call_select}, comment, time
+                    FROM {table_name}
+                    WHERE ({call_select.split(' AS ')[0]} = %s OR %s = 'ALL')
+                    AND (time >= UNIX_TIMESTAMP(NOW() - INTERVAL %s MINUTE))
+                    ORDER BY time DESC LIMIT 10
+                """
+                try:
+                    cursor.execute(query, (indicativo, indicativo, minutos))
+                    results = cursor.fetchall()
+                    break
+                except mysql.connector.Error as e:
+                    # 1146 = table does not exist; try next known table name.
+                    if getattr(e, "errno", None) != 1146:
+                        raise
+
             db_spider.close()
             return results
         except Exception:

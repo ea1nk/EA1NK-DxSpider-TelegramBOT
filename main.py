@@ -557,6 +557,10 @@ class DXBot:
         self.db.update_rbn_preference(update.effective_user.id, status)
         await self._reply(update, get_text('rbn_status', lang, status=status.upper()), parse_mode='HTML')
 
+    async def handle_about(self, update, context):
+        lang = self._get_lang(update)
+        await self._reply(update, get_text('about', lang), parse_mode='HTML')
+
     async def run(self):
         # Registrar handlers para graceful shutdown
         loop = asyncio.get_event_loop()
@@ -576,6 +580,7 @@ class DXBot:
         self.app.add_handler(CommandHandler("clearallfilters", self.handle_clearallfilters))
         self.app.add_handler(CommandHandler("last", self.handle_last))
         self.app.add_handler(CommandHandler("rbn", self.handle_rbn))
+        self.app.add_handler(CommandHandler("about", self.handle_about))
         self.app.add_handler(CallbackQueryHandler(self.handle_delete_filter_button))
         self.app.add_error_handler(self.handle_error)
         

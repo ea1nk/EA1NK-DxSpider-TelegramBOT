@@ -14,6 +14,7 @@ STRINGS = {
             "• /rbn [on|off] - Activar/Desactivar RBN\n"
             "• /myfilters - Ver filtros activos (pulsa botones para borrar)\n\n"
             "• /clearallfilters - Borrar todos tus filtros\n\n"
+            "• /about - Informacion del bot\n\n"
             "ℹ️ <i>Duplicados filtrados cada 10 min.</i>"
         ),
         'filter_error': "❌ Error: Formato incorrecto.\n\n<b>Uso:</b>\n/setfilter &lt;CALL&gt;\n/setfilter &lt;CALL&gt; &lt;bandas&gt;\n/setfilter &lt;CALL&gt; * &lt;modos&gt;\n/setfilter &lt;CALL&gt; &lt;bandas&gt; &lt;modos&gt;",
@@ -29,7 +30,8 @@ STRINGS = {
         'clearall_confirm_yes': "✅ Confirmar",
         'clearall_confirm_no': "❌ Cancelar",
         'clearall_cancelled': "✅ Operacion cancelada. Tus spots vuelven a estar activos.",
-        'clearall_expired': "ℹ️ La confirmacion ha expirado. Ejecuta /clearallfilters de nuevo."
+        'clearall_expired': "ℹ️ La confirmacion ha expirado. Ejecuta /clearallfilters de nuevo.",
+        'about': "<b>2026 SCQ Devices - EA1NK DXspider Telegram Bot</b>"
     },
     'en': {
         'start': "<b>73, {name}!</b> 🎙️\nWelcome to your DX Alert bot with RBN support.",
@@ -46,6 +48,7 @@ STRINGS = {
             "• /rbn [on|off] - Enable/Disable RBN\n"
             "• /myfilters - View active filters (press buttons to delete)\n\n"
             "• /clearallfilters - Remove all your filters\n\n"
+            "• /about - Bot information\n\n"
             "ℹ️ <i>Duplicates filtered every 10 min.</i>"
         ),
         'filter_error': "❌ Error: Invalid format.\n\n<b>Usage:</b>\n/setfilter &lt;CALL&gt;\n/setfilter &lt;CALL&gt; &lt;bands&gt;\n/setfilter &lt;CALL&gt; * &lt;modes&gt;\n/setfilter &lt;CALL&gt; &lt;bands&gt; &lt;modes&gt;",
@@ -61,7 +64,8 @@ STRINGS = {
         'clearall_confirm_yes': "✅ Confirm",
         'clearall_confirm_no': "❌ Cancel",
         'clearall_cancelled': "✅ Operation cancelled. Your spot delivery is active again.",
-        'clearall_expired': "ℹ️ Confirmation expired. Run /clearallfilters again."
+        'clearall_expired': "ℹ️ Confirmation expired. Run /clearallfilters again.",
+        'about': "<b>2026 SCQ Devices - EA1NK DXspider Telegram Bot</b>"
     },
     'fr': {
         'start': "<b>73, {name}!</b> 🎙️\nBienvenue sur votre bot d'alerte DX.",

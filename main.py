@@ -147,7 +147,10 @@ class DXBot:
     async def handle_start(self, update, context):
         lang = self._get_lang(update)
         name = getattr(update.effective_user, "first_name", "") or ""
+        is_first_connection = self.db.register_user_if_new(update.effective_user.id)
         await self._reply(update, get_text('start', lang, name=name), parse_mode='HTML')
+        if is_first_connection:
+            await self._reply(update, get_text('help', lang), parse_mode='HTML')
 
     async def handle_help(self, update, context):
         lang = self._get_lang(update)

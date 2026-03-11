@@ -17,7 +17,18 @@ class DatabaseManager:
                 lang TEXT,
                 rbn_enabled INTEGER DEFAULT 1
             )""")
+        self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                user_id INTEGER PRIMARY KEY,
+                first_seen_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )""")
         self.conn.commit()
+
+    def register_user_if_new(self, u_id):
+        """Registers user if missing and returns True only on first registration."""
+        c = self.conn.execute("INSERT OR IGNORE INTO users (user_id) VALUES (?)", (u_id,))
+        self.conn.commit()
+        return c.rowcount > 0
 
     def add_filter(self, u_id, call, bands, modes, lang):
         bands_norm = bands.strip().lower()

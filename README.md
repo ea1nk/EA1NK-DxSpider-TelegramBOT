@@ -13,7 +13,7 @@
 ███████╗██║  ██║ ██║██║ ╚████║██║  ██╗           
 2026 EA1NK-DxSpider-TelegramBOT
 ```
-# EA1NK-DxSpider-TelegramBOT
+# :robot: EA1NK-DxSpider-TelegramBOT
 
 Telegram bot for DX alerts from a DXSpider cluster, with user filters, duplicate suppression, and optional RBN filtering.
 

@@ -20,10 +20,19 @@ class DatabaseManager:
         self.conn.commit()
 
     def add_filter(self, u_id, call, bands, modes, lang):
+        bands_norm = bands.strip().lower()
+        modes_norm = modes.strip().upper()
+
+        # Accept common wildcards for "all bands" and "all modes".
+        if bands_norm in ("all", "*", "todas"):
+            bands_norm = "all"
+        if modes_norm in ("ALL", "*", "TODOS"):
+            modes_norm = "ALL"
+
         # Corregido: 6 columnas y 6 valores (5 dinámicos + 1 fijo)
         self.conn.execute(
             "INSERT INTO filtros (user_id, indicativo, bandas, modos, lang, rbn_enabled) VALUES (?,?,?,?,?,1)",
-            (u_id, call.upper(), bands.lower(), modes.upper(), lang)
+            (u_id, call.upper(), bands_norm, modes_norm, lang)
         )
         self.conn.commit()
 
@@ -51,8 +60,8 @@ class DatabaseManager:
         query = f"""
             SELECT DISTINCT user_id, lang FROM filtros 
             WHERE (indicativo = ? OR indicativo = 'ALL') 
-            AND (bandas LIKE ? OR bandas = 'ALL') 
-            AND (modos LIKE ? OR modos = 'ALL')
+            AND (LOWER(bandas) LIKE ? OR LOWER(bandas) = 'all') 
+            AND (UPPER(modos) LIKE ? OR UPPER(modos) = 'ALL')
             {rbn_clause}
         """
         cursor.execute(query, (dx_call.upper(), f"%{banda.lower()}%", f"%{modo.upper()}%"))

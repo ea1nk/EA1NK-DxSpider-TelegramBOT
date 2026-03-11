@@ -66,6 +66,8 @@ Recomendadas:
 - SPIDER_HOST: Host de DXSpider (por defecto: dxspider).
 - SPIDER_PORT: Puerto de DXSpider (por defecto: 23).
 - MY_CALL: Indicativo usado para entrar al cluster (por defecto: BOT).
+- DEBUG_TELNET: Activar logs de depuracion telnet (por defecto: 0, poner 1 para debug).
+- PYTHONUNBUFFERED: Salida sin buffer para logs en tiempo real (por defecto: 1).
 
 Para el comando /last (MySQL):
 
@@ -143,13 +145,31 @@ docker compose logs -f dx-telegram-bot
 
 ## Comandos del bot
 
-- /start
-- /help
-- /setfilter [DX] [Banda] [Modo]
-- /myfilters
-- /delfilter [ID]
-- /last [DX]
-- /rbn on|off
+### /setfilter - Crear o actualizar filtro
+
+Sintaxis flexible para crear alertas:
+
+- `/setfilter <CALL>` - Todas las bandas, todos los modos
+- `/setfilter <CALL> <bandas>` - Bandas específicas, todos los modos
+- `/setfilter <CALL> * <modos>` - Todas las bandas, modos específicos
+- `/setfilter <CALL> <bandas> <modos>` - Bandas y modos específicos
+
+**Bandas:** `160,80,60,40,30,20,17,15,12,10,6,4,2,UHF` (separadas por comas, o `ALL`/`*`)  
+**Modos:** `SSB,CW,DIGI,FT8` (separados por comas, o `ALL`/`*`)
+
+Ejemplos:
+- `/setfilter EA1ABC` → alertas para EA1ABC en todas bandas/modos
+- `/setfilter EA1ABC 40,20` → EA1ABC en 40m y 20m, todos los modos
+- `/setfilter EA1ABC * FT8` → EA1ABC en todas bandas, solo FT8
+- `/setfilter EA1ABC ALL ALL` → lo mismo que `/setfilter EA1ABC`
+
+### Otros comandos
+
+- `/help` - Mostrar guía de comandos
+- `/myfilters` - Ver filtros activos (pulsa botón para borrar)
+- `/last <CALL>` - Mostrar spots recientes de un indicativo
+- `/rbn on|off` - Activar/desactivar spots de RBN (Skimmer)
+- `/start` - Iniciar/mostrar mensaje de bienvenida
 
 ## Persistencia de datos
 

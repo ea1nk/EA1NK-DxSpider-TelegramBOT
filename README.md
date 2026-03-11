@@ -66,6 +66,8 @@ Recommended:
 - SPIDER_HOST: DXSpider hostname (default: dxspider).
 - SPIDER_PORT: DXSpider port (default: 23).
 - MY_CALL: Callsign used to log in to the cluster (default: BOT).
+- DEBUG_TELNET: Enable telnet connection debug logging (default: 0, set to 1 for debug mode).
+- PYTHONUNBUFFERED: Unbuffered Python output for real-time logs (default: 1).
 
 For /last command (MySQL spots DB):
 
@@ -143,13 +145,31 @@ docker compose logs -f dx-telegram-bot
 
 ## Telegram commands
 
-- /start
-- /help
-- /setfilter [CALL] [BANDS] [MODE]
-- /myfilters
-- /delfilter [ID]
-- /last [CALL]
-- /rbn on|off
+### /setfilter - Create or update filter
+
+Flexible syntax for creating alerts:
+
+- `/setfilter <CALL>` - All bands, all modes
+- `/setfilter <CALL> <bands>` - Specific bands only, all modes
+- `/setfilter <CALL> * <modes>` - All bands, specific modes only
+- `/setfilter <CALL> <bands> <modes>` - Specific bands and modes
+
+**Bands:** `160,80,60,40,30,20,17,15,12,10,6,4,2,UHF` (comma-separated, or `ALL`/`*`)  
+**Modes:** `SSB,CW,DIGI,FT8` (comma-separated, or `ALL`/`*`)
+
+Examples:
+- `/setfilter EA1ABC` → alerts for EA1ABC on all bands/modes
+- `/setfilter EA1ABC 40,20` → EA1ABC on 40m and 20m, all modes
+- `/setfilter EA1ABC * FT8` → EA1ABC on all bands, only FT8
+- `/setfilter EA1ABC ALL ALL` → same as `/setfilter EA1ABC`
+
+### Other commands
+
+- `/help` - Show command guide
+- `/myfilters` - View active filters (click button to delete)
+- `/last <CALL>` - Show recent spots for a callsign
+- `/rbn on|off` - Enable/disable RBN (Skimmer) spots
+- `/start` - Start/show welcome message
 
 ## Data persistence
 

@@ -3,13 +3,21 @@ STRINGS = {
         'start': "<b>¡73, {name}!</b> 🎙️\nBienvenido a tu bot DX con soporte RBN.",
         'help': (
             "<b>Guía de Comandos:</b>\n\n"
-            "• /setfilter [DX] [Banda] [Modo] - Crear alerta e historial.\n"
-            "• /last [DX] - Ver últimos 10 spots (30 min).\n"
-            "• /rbn [on|off] - Activar/Desactivar spots de Skimmers/RBN.\n"
-            "• /myfilters - Ver tus alertas activas.\n"
-            "• /delfilter [ID] - Borrar una alerta.\n\n"
-            "ℹ️ <i>Nota: Se filtran duplicados automáticamente cada 10 min.</i>"
+            "<b>/setfilter</b>\n"
+            "  /setfilter &lt;CALL&gt; - Todas las bandas, todos los modos\n"
+            "  /setfilter &lt;CALL&gt; &lt;bandas&gt; - Bandas específicas, todos los modos\n"
+            "  /setfilter &lt;CALL&gt; * &lt;modos&gt; - Todas las bandas, modos específicos\n"
+            "  /setfilter &lt;CALL&gt; &lt;bandas&gt; &lt;modos&gt; - Bandas y modos específicos\n\n"
+            "<b>Bandas:</b> 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF (ej: 40,20 o ALL/*)\n"
+            "<b>Modos:</b> SSB,CW,DIGI,FT8 (ej: SSB,FT8 o ALL/*)\n\n"
+            "• /last [CALL] - Ver últimos 10 spots (30 min)\n"
+            "• /rbn [on|off] - Activar/Desactivar RBN\n"
+            "• /myfilters - Ver filtros activos (pulsa botones para borrar)\n\n"
+            "ℹ️ <i>Duplicados filtrados cada 10 min.</i>"
         ),
+        'filter_error': "❌ Error: Formato incorrecto.\n\n<b>Uso:</b>\n/setfilter &lt;CALL&gt;\n/setfilter &lt;CALL&gt; &lt;bandas&gt;\n/setfilter &lt;CALL&gt; * &lt;modos&gt;\n/setfilter &lt;CALL&gt; &lt;bandas&gt; &lt;modos&gt;",
+        'invalid_bands': "❌ Bandas inválidas. Usa: 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF",
+        'invalid_modes': "❌ Modos inválidos. Usa: SSB,CW,DIGI,FT8",
         'rbn_status': "✅ Spots de RBN ahora: <b>{status}</b>",
         'spot': "🎯 <b>SPOT</b>\n\n<b>DX:</b> {call}\n<b>Banda:</b> {band}\n<b>Modo:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Info:</b> <code>{comment}</code>",
         'filter_saved': "✅ Filtro guardado: {call} en {bands} ({mode}).",
@@ -19,13 +27,21 @@ STRINGS = {
         'start': "<b>73, {name}!</b> 🎙️\nWelcome to your DX Alert bot with RBN support.",
         'help': (
             "<b>Command Guide:</b>\n\n"
-            "• /setfilter [Call] [Band] [Mode] - Create alert and show history.\n"
-            "• /last [Call] - Show last 10 spots (30 min).\n"
-            "• /rbn [on|off] - Enable/Disable RBN (Skimmer) spots.\n"
-            "• /myfilters - View active alerts.\n"
-            "• /delfilter [ID] - Delete an alert.\n\n"
-            "ℹ️ <i>Note: Duplicates are filtered every 10 min.</i>"
+            "<b>/setfilter</b>\n"
+            "  /setfilter &lt;CALL&gt; - All bands, all modes\n"
+            "  /setfilter &lt;CALL&gt; &lt;bands&gt; - Specific bands, all modes\n"
+            "  /setfilter &lt;CALL&gt; * &lt;modes&gt; - All bands, specific modes\n"
+            "  /setfilter &lt;CALL&gt; &lt;bands&gt; &lt;modes&gt; - Specific bands and modes\n\n"
+            "<b>Bands:</b> 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF (e.g: 40,20 or ALL/*)\n"
+            "<b>Modes:</b> SSB,CW,DIGI,FT8 (e.g: SSB,FT8 or ALL/*)\n\n"
+            "• /last [CALL] - Show last 10 spots (30 min)\n"
+            "• /rbn [on|off] - Enable/Disable RBN\n"
+            "• /myfilters - View active filters (press buttons to delete)\n\n"
+            "ℹ️ <i>Duplicates filtered every 10 min.</i>"
         ),
+        'filter_error': "❌ Error: Invalid format.\n\n<b>Usage:</b>\n/setfilter &lt;CALL&gt;\n/setfilter &lt;CALL&gt; &lt;bands&gt;\n/setfilter &lt;CALL&gt; * &lt;modes&gt;\n/setfilter &lt;CALL&gt; &lt;bands&gt; &lt;modes&gt;",
+        'invalid_bands': "❌ Invalid bands. Use: 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF",
+        'invalid_modes': "❌ Invalid modes. Use: SSB,CW,DIGI,FT8",
         'rbn_status': "✅ RBN spots are now: <b>{status}</b>",
         'spot': "🎯 <b>SPOT</b>\n\n<b>DX:</b> {call}\n<b>Band:</b> {band}\n<b>Mode:</b> {mode}\n<b>Freq:</b> {freq}\n<b>Info:</b> <code>{comment}</code>",
         'filter_saved': "✅ Filter saved: {call} on {bands} ({mode}).",
@@ -33,7 +49,10 @@ STRINGS = {
     },
     'fr': {
         'start': "<b>73, {name}!</b> 🎙️\nBienvenue sur votre bot d'alerte DX.",
-        'help': "<b>Guide:</b>\n• /setfilter [DX] [Bande] [Mode]\n• /last [DX]\n• /rbn [on|off]",
+        'help': "<b>Guide:</b>\n• /setfilter [DX]\n• /setfilter [DX] [Bandes]\n• /setfilter [DX] * [Modes]\n• /setfilter [DX] [Bandes] [Modes]\n\n<b>Bandes:</b> 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF (ALL/*)\n<b>Modes:</b> SSB,CW,DIGI,FT8 (ALL/*)",
+        'filter_error': "❌ Erreur: Format invalide.",
+        'invalid_bands': "❌ Bandes invalides. Utilisez: 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF",
+        'invalid_modes': "❌ Modes invalides. Utilisez: SSB,CW,DIGI,FT8",
         'rbn_status': "✅ Spots RBN: <b>{status}</b>",
         'spot': "🎯 <b>SPOT</b>\n\n<b>DX:</b> {call}\n<b>Bande:</b> {band}\n<b>Mode:</b> {mode}",
         'filter_saved': "✅ Filtre enregistré: {call} ({mode}).",
@@ -41,7 +60,10 @@ STRINGS = {
     },
     'it': {
         'start': "<b>73, {name}!</b> 🎙️\nBenvenuto nel tuo bot DX.",
-        'help': "<b>Guida:</b>\n• /setfilter [DX] [Banda] [Modo]\n• /last [DX]\n• /rbn [on|off]",
+        'help': "<b>Guida:</b>\n• /setfilter [DX]\n• /setfilter [DX] [Bande]\n• /setfilter [DX] * [Modi]\n• /setfilter [DX] [Bande] [Modi]\n\n<b>Bande:</b> 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF (ALL/*)\n<b>Modi:</b> SSB,CW,DIGI,FT8 (ALL/*)",
+        'filter_error': "❌ Errore: Formato non valido.",
+        'invalid_bands': "❌ Bande non valide. Usa: 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF",
+        'invalid_modes': "❌ Modi non validi. Usa: SSB,CW,DIGI,FT8",
         'rbn_status': "✅ Spots RBN: <b>{status}</b>",
         'spot': "🎯 <b>SPOT</b>\n\n<b>DX:</b> {call}\n<b>Banda:</b> {band}\n<b>Modo:</b> {mode}",
         'filter_saved': "✅ Filtro salvato: {call} ({mode}).",
@@ -49,7 +71,10 @@ STRINGS = {
     },
     'de': {
         'start': "<b>73, {name}!</b> 🎙️\nWillkommen beim DX-Bot.",
-        'help': "<b>Anleitung:</b>\n• /setfilter [DX] [Band] [Modus]\n• /last [DX]\n• /rbn [on|off]",
+        'help': "<b>Anleitung:</b>\n• /setfilter [DX]\n• /setfilter [DX] [Bänder]\n• /setfilter [DX] * [Modi]\n• /setfilter [DX] [Bänder] [Modi]\n\n<b>Bänder:</b> 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF (ALL/*)\n<b>Modi:</b> SSB,CW,DIGI,FT8 (ALL/*)",
+        'filter_error': "❌ Fehler: Ungültiges Format.",
+        'invalid_bands': "❌ Ungültige Bänder. Verwenden Sie: 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF",
+        'invalid_modes': "❌ Ungültige Modi. Verwenden Sie: SSB,CW,DIGI,FT8",
         'rbn_status': "✅ RBN-Spots: <b>{status}</b>",
         'spot': "🎯 <b>SPOT</b>\n\n<b>DX:</b> {call}\n<b>Band:</b> {band}\n<b>Modus:</b> {mode}",
         'filter_saved': "✅ Filter gespeichert: {call} ({mode}).",
@@ -57,7 +82,10 @@ STRINGS = {
     },
     'pt': {
         'start': "<b>73, {name}!</b> 🎙️\nBem-vindo ao bot DX.",
-        'help': "<b>Guia:</b>\n• /setfilter [DX] [Banda] [Modo]\n• /last [DX]\n• /rbn [on|off]",
+        'help': "<b>Guia:</b>\n• /setfilter [DX]\n• /setfilter [DX] [Bandas]\n• /setfilter [DX] * [Modos]\n• /setfilter [DX] [Bandas] [Modos]\n\n<b>Bandas:</b> 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF (ALL/*)\n<b>Modos:</b> SSB,CW,DIGI,FT8 (ALL/*)",
+        'filter_error': "❌ Erro: Formato inválido.",
+        'invalid_bands': "❌ Bandas inválidas. Use: 160,80,60,40,30,20,17,15,12,10,6,4,2,UHF",
+        'invalid_modes': "❌ Modos inválidos. Use: SSB,CW,DIGI,FT8",
         'rbn_status': "✅ Spots RBN: <b>{status}</b>",
         'spot': "🎯 <b>SPOT</b>\n\n<b>DX:</b> {call}\n<b>Banda:</b> {band}\n<b>Modo:</b> {mode}",
         'filter_saved': "✅ Filtro salvo: {call} ({mode}).",

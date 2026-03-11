@@ -14,6 +14,11 @@ TIEMPO_EXPIRACION = 600 # 10 minutos
 class DXBot:
     CALL_RE = re.compile(r"^[A-Z0-9][A-Z0-9/.-]{2,}$")
     RBN_MARKER_RE = re.compile(r"\b(?:RBN|SK[0-9I]MMR|SKIMMER|CWSKIMMER|CW\s+SKIMMER)\b", re.IGNORECASE)
+    RBN_PROGRESS_RE = re.compile(
+        r"RBN:\s+SPOT\s+key:\s*'(?P<dx_key>[^|']+)\|(?P<freq_key>\d+)'"
+        r"(?:\s*=\s*(?P<dx_eq>[A-Z0-9/.-]+)\s+on\s+(?P<freq_eq>[\d.]+)\s+by\s+(?P<spotter>[A-Z0-9/.-]+))?",
+        re.IGNORECASE,
+    )
 
     def __init__(self):
         self.token = os.getenv("BOT_TOKEN")
@@ -88,6 +93,25 @@ class DXBot:
                 spotter = parts[6].strip()
                 if freq and dx_call:
                     return spotter, freq, dx_call, comment
+
+        # Texto de progreso RBN (no PCxx), por ejemplo:
+        # RBN: SPOT key: 'HF9T|210740' = HF9T on 21074 by K9LC ... route: SK1MMR ...
+        rbn_match = DXBot.RBN_PROGRESS_RE.search(msg)
+        if rbn_match:
+            dx_call = (rbn_match.group("dx_eq") or rbn_match.group("dx_key") or "").strip().upper()
+            spotter = (rbn_match.group("spotter") or "RBN").strip().upper()
+
+            freq_eq = rbn_match.group("freq_eq")
+            if freq_eq:
+                freq = freq_eq.strip()
+            else:
+                # freq_key viene como kHz*10 (210740 => 21074.0)
+                freq_key = rbn_match.group("freq_key")
+                freq = str(float(freq_key) / 10.0)
+
+            comment = msg.strip()
+            if dx_call and freq:
+                return spotter, freq, dx_call, comment
 
         return None
 
@@ -179,6 +203,8 @@ class DXBot:
                                 raw_format = "PC61"
                             elif msg.startswith("PC26^"):
                                 raw_format = "PC26"
+                            elif "RBN: SPOT key:" in msg.upper():
+                                raw_format = "RBN-TEXT"
                             elif msg.startswith("DX de "):
                                 raw_format = "LEGACY"
                             else:

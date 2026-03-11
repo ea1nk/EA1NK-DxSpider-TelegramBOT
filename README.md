@@ -159,6 +159,7 @@ Flexible syntax for creating alerts:
 
 - `/setfilter <CALL>` - All bands, all modes
 - `/setfilter <CALL> <bands>` - Specific bands only, all modes
+- `/setfilter <CALL> <modes>` - All bands, specific modes only
 - `/setfilter <CALL> * <modes>` - All bands, specific modes only
 - `/setfilter <CALL> <bands> <modes>` - Specific bands and modes
 
@@ -168,16 +169,19 @@ Flexible syntax for creating alerts:
 Examples:
 - `/setfilter EA1ABC` → alerts for EA1ABC on all bands/modes
 - `/setfilter EA1ABC 40,20` → EA1ABC on 40m and 20m, all modes
+- `/setfilter EA1ABC FT8,CW` → EA1ABC on all bands, only FT8 and CW
 - `/setfilter EA1ABC * FT8` → EA1ABC on all bands, only FT8
 - `/setfilter EA1ABC ALL ALL` → same as `/setfilter EA1ABC`
 
 ### Other commands
 
+- `/start` - Start bot and show welcome message
 - `/help` - Show command guide
 - `/myfilters` - View active filters (click button to delete)
-- `/last <CALL>` - Show recent spots for a callsign
-- `/rbn on|off` - Enable/disable RBN (Skimmer) spots
-- `/start` - Start/show welcome message
+- `/clearallfilters` - Remove all your filters (requires inline confirmation)
+- `/last <CALL>` - Show last 10 spots in the last 30 minutes for a callsign
+- `/rbn on|off` - Enable or disable RBN (Skimmer) spots for your alerts
+- `/about` - Show bot information
 
 ## Data persistence
 

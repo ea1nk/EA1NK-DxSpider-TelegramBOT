@@ -159,6 +159,7 @@ Sintaxis flexible para crear alertas:
 
 - `/setfilter <CALL>` - Todas las bandas, todos los modos
 - `/setfilter <CALL> <bandas>` - Bandas específicas, todos los modos
+- `/setfilter <CALL> <modos>` - Todas las bandas, modos específicos
 - `/setfilter <CALL> * <modos>` - Todas las bandas, modos específicos
 - `/setfilter <CALL> <bandas> <modos>` - Bandas y modos específicos
 
@@ -168,16 +169,19 @@ Sintaxis flexible para crear alertas:
 Ejemplos:
 - `/setfilter EA1ABC` → alertas para EA1ABC en todas bandas/modos
 - `/setfilter EA1ABC 40,20` → EA1ABC en 40m y 20m, todos los modos
+- `/setfilter EA1ABC FT8,CW` → EA1ABC en todas las bandas, solo FT8 y CW
 - `/setfilter EA1ABC * FT8` → EA1ABC en todas bandas, solo FT8
 - `/setfilter EA1ABC ALL ALL` → lo mismo que `/setfilter EA1ABC`
 
 ### Otros comandos
 
+- `/start` - Iniciar el bot y mostrar mensaje de bienvenida
 - `/help` - Mostrar guía de comandos
 - `/myfilters` - Ver filtros activos (pulsa botón para borrar)
-- `/last <CALL>` - Mostrar spots recientes de un indicativo
-- `/rbn on|off` - Activar/desactivar spots de RBN (Skimmer)
-- `/start` - Iniciar/mostrar mensaje de bienvenida
+- `/clearallfilters` - Borrar todos tus filtros (requiere confirmación en botones)
+- `/last <CALL>` - Ver los últimos 10 spots de los últimos 30 minutos para un indicativo
+- `/rbn on|off` - Activar o desactivar spots RBN (Skimmer) en tus alertas
+- `/about` - Mostrar información del bot
 
 ## Persistencia de datos
 

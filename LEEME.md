@@ -84,6 +84,34 @@ Variables de proxy opcionales:
 - https_proxy
 - NO_PROXY
 
+## Optimizacion de workers de Telegram (nuevo)
+
+El envio de mensajes a Telegram ahora esta desacoplado del parser telnet mediante:
+
+- Cola asincrona de envio (`sender_queue`).
+- Pool de workers Telegram con escalado dinamico segun carga.
+- Reintentos con backoff para errores transitorios de red/timeout.
+- Drenado controlado de cola durante shutdown graceful.
+
+Esto evita bloquear la recepcion de spots cuando hay rafagas o volumen variable de usuarios.
+
+Variables de ajuste (todas opcionales):
+
+- TG_POOL_SIZE: Tamano del pool HTTP hacia Telegram (default: 20).
+- TG_POOL_TIMEOUT: Tiempo maximo para esperar conexion libre del pool (default: 10).
+- TG_SEND_QUEUE_MAX: Capacidad maxima de la cola de mensajes (default: 5000).
+- TG_ENQUEUE_TIMEOUT: Tiempo maximo para encolar antes de descartar (default: 0.3).
+- TG_DRAIN_TIMEOUT: Tiempo maximo de drenado al detener el bot (default: 15).
+- TG_MIN_SENDER_WORKERS: Numero minimo de workers de envio (default calculado desde pool, recomendado 10).
+- TG_MAX_SENDER_WORKERS: Limite maximo de workers de envio (default calculado, recomendado 64).
+- TG_SCALE_UP_EVERY: Sensibilidad del autoescalado por tamano de cola (default: 50).
+
+Perfiles orientativos:
+
+- Carga baja: pool 10, workers 4-16, scale_up_every 80.
+- Carga media (recomendado): pool 20, workers 10-64, scale_up_every 50.
+- Carga alta: pool 30, workers 12-96, scale_up_every 35.
+
 ## Configuracion y ejecucion local (sin Docker)
 
 1. Instalar dependencias:
@@ -192,3 +220,7 @@ Ejemplos:
 
 - Si se pierde la conexion con DXSpider, el bot reintenta automaticamente.
 - Los spots duplicados se filtran durante 10 minutos.
+- Logs utiles de rendimiento:
+	- `[INFO] Pool Telegram iniciado: workers=... queue_max=... pool_size=...`
+	- `[WARN] Cola Telegram saturada...`
+	- `[ERROR] Fallos Telegram acumulados=...`

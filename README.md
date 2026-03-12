@@ -84,6 +84,34 @@ Optional proxy variables:
 - https_proxy
 - NO_PROXY
 
+## Telegram worker optimization (new)
+
+Telegram delivery is now decoupled from telnet parsing through:
+
+- Async send queue (`sender_queue`).
+- Dynamic Telegram sender worker pool.
+- Retry with backoff for transient network/timeout errors.
+- Controlled queue draining during graceful shutdown.
+
+This prevents spot intake from being blocked during bursts or highly variable user load.
+
+Tuning variables (all optional):
+
+- TG_POOL_SIZE: HTTP connection pool size to Telegram (default: 20).
+- TG_POOL_TIMEOUT: Max wait for a free pool connection (default: 10).
+- TG_SEND_QUEUE_MAX: Max queued outbound messages (default: 5000).
+- TG_ENQUEUE_TIMEOUT: Max wait to enqueue before dropping (default: 0.3).
+- TG_DRAIN_TIMEOUT: Max queue drain time during shutdown (default: 15).
+- TG_MIN_SENDER_WORKERS: Minimum sender workers (default derived from pool, recommended 10).
+- TG_MAX_SENDER_WORKERS: Maximum sender workers (default derived, recommended 64).
+- TG_SCALE_UP_EVERY: Autoscaling sensitivity by queue depth (default: 50).
+
+Suggested profiles:
+
+- Low load: pool 10, workers 4-16, scale_up_every 80.
+- Medium load (recommended): pool 20, workers 10-64, scale_up_every 50.
+- High load: pool 30, workers 12-96, scale_up_every 35.
+
 ## Local run (without Docker)
 
 1. Install dependencies:
@@ -192,3 +220,7 @@ Examples:
 
 - If the bot cannot reach DXSpider, it retries automatically.
 - Duplicate alerts are suppressed for 10 minutes.
+- Useful performance logs:
+	- `[INFO] Pool Telegram iniciado: workers=... queue_max=... pool_size=...`
+	- `[WARN] Cola Telegram saturada...`
+	- `[ERROR] Fallos Telegram acumulados=...`

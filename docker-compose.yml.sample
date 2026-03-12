@@ -14,6 +14,18 @@ services:
       - CLUSTER_DB_NAME=${CLUSTER_DB_NAME}
       - CLUSTER_DB_USER=${CLUSTER_DB_USER}
       - CLUSTER_DB_PASS=${CLUSTER_DB_PASS}
+
+      # Telegram tuning (workers + HTTP pool)
+      # Usa valores de .env; estos defaults son perfil base (carga media)
+      - TG_POOL_SIZE=${TG_POOL_SIZE:-20}
+      - TG_POOL_TIMEOUT=${TG_POOL_TIMEOUT:-10}
+      - TG_SEND_QUEUE_MAX=${TG_SEND_QUEUE_MAX:-5000}
+      - TG_ENQUEUE_TIMEOUT=${TG_ENQUEUE_TIMEOUT:-0.3}
+      - TG_DRAIN_TIMEOUT=${TG_DRAIN_TIMEOUT:-15}
+      - TG_MIN_SENDER_WORKERS=${TG_MIN_SENDER_WORKERS:-10}
+      - TG_MAX_SENDER_WORKERS=${TG_MAX_SENDER_WORKERS:-64}
+      - TG_SCALE_UP_EVERY=${TG_SCALE_UP_EVERY:-50}
+
       - HTTP_PROXY=
       - HTTPS_PROXY=
       - http_proxy=

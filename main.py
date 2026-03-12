@@ -467,7 +467,7 @@ class DXBot:
                             for uid, lang in users:
                                 if self._is_clear_pending(uid):
                                     continue
-                                rbn_label = " <b>[RBN]</b>" if is_rbn else ""
+                                rbn_label = " [RBN]" if is_rbn else ""
                                 txt = get_text('spot', lang, call=dx_call, band=band, mode=mode, freq=freq, comment=clean_comment, rbn_label=rbn_label, time=spot_time, origin=origin)
                                 await self._enqueue_telegram(uid, txt)
                 

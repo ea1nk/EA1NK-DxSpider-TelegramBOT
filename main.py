@@ -38,13 +38,20 @@ class DXBot:
         self.shutdown_event = asyncio.Event()
         # user_id -> expiry timestamp. While present, spot delivery is paused for that user.
         self.pending_clear_confirmations = {}
+        self.http_pool_size = int(os.getenv("TG_POOL_SIZE", "20"))
+        self.http_pool_timeout = float(os.getenv("TG_POOL_TIMEOUT", "10"))
         
         # Configuración de la App (con bypass de proxy si las variables están vacías)
+        request_kwargs = {
+            "proxy_url": os.getenv("HTTPS_PROXY") or None,
+            "connection_pool_size": self.http_pool_size,
+            "pool_timeout": self.http_pool_timeout,
+        }
         self.app = (
             Application.builder()
             .token(self.token)
-            .get_updates_request(HTTPXRequest(proxy_url=os.getenv("HTTPS_PROXY") or None))
-            .request(HTTPXRequest(proxy_url=os.getenv("HTTPS_PROXY") or None))
+            .get_updates_request(HTTPXRequest(**request_kwargs))
+            .request(HTTPXRequest(**request_kwargs))
             .build()
         )
 
@@ -329,7 +336,10 @@ class DXBot:
                                     continue
                                 rbn_label = " <b>[RBN]</b>" if is_rbn else ""
                                 txt = get_text('spot', lang, call=dx_call, band=band, mode=mode, freq=freq, comment=clean_comment, rbn_label=rbn_label, time=spot_time, origin=origin)
-                                await self.app.bot.send_message(chat_id=uid, text=txt, parse_mode='HTML')
+                                try:
+                                    await self.app.bot.send_message(chat_id=uid, text=txt, parse_mode='HTML')
+                                except Exception as send_err:
+                                    print(f"[ERROR] Telegram send (uid={uid}): {send_err}")
                 
                 writer.close()
                 await writer.wait_closed()

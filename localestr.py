@@ -1,3 +1,5 @@
+import html
+
 STRINGS = {
     'es': {
         'start': "<b>¡73, {name}!</b> 🎙️\nBienvenido a tu bot DX con soporte RBN.",
@@ -128,4 +130,8 @@ def get_text(key, lang_code, **kwargs):
     kwargs.setdefault('time', 'N/A')
     kwargs.setdefault('origin', 'N/A')
     kwargs.setdefault('comment', '')
-    return template.format(**kwargs)
+    safe_kwargs = {
+        k: html.escape(str(v), quote=False) if v is not None else ''
+        for k, v in kwargs.items()
+    }
+    return template.format(**safe_kwargs)

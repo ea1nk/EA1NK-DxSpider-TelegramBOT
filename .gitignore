@@ -8,3 +8,7 @@ data/dx_bot.db
 # Local deployment secrets
 .env
 docker-compose.yml
+
+# Python cache
+__pycache__/
+*.py[cod]

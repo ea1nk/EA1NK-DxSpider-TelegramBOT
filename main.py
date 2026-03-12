@@ -2,7 +2,7 @@ import asyncio, os, re, time, signal
 from collections import deque
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.error import Conflict
+from telegram.error import Conflict, TimedOut, NetworkError, RetryAfter, TelegramError
 from database import DatabaseManager
 from logic import obtener_banda, detectar_modo_definitivo
 from localestr import get_text
@@ -40,6 +40,17 @@ class DXBot:
         self.pending_clear_confirmations = {}
         self.http_pool_size = int(os.getenv("TG_POOL_SIZE", "20"))
         self.http_pool_timeout = float(os.getenv("TG_POOL_TIMEOUT", "10"))
+        self.send_queue_max_size = int(os.getenv("TG_SEND_QUEUE_MAX", "5000"))
+        self.queue_enqueue_timeout = float(os.getenv("TG_ENQUEUE_TIMEOUT", "0.3"))
+        self.queue_drain_timeout = float(os.getenv("TG_DRAIN_TIMEOUT", "15"))
+        self.min_sender_workers = max(1, int(os.getenv("TG_MIN_SENDER_WORKERS", str(max(2, self.http_pool_size // 2)))))
+        self.max_sender_workers = max(self.min_sender_workers, int(os.getenv("TG_MAX_SENDER_WORKERS", str(min(64, self.http_pool_size * 4)))))
+        self.scale_up_every = max(1, int(os.getenv("TG_SCALE_UP_EVERY", "50")))
+        self.sender_queue = asyncio.Queue(maxsize=self.send_queue_max_size)
+        self.sender_workers = []
+        self.sender_scaler_task = None
+        self.dropped_messages = 0
+        self.send_failures = 0
         
         # Configuración de la App (con bypass de proxy si las variables están vacías)
         request_kwargs = {
@@ -54,6 +65,128 @@ class DXBot:
             .request(HTTPXRequest(**request_kwargs))
             .build()
         )
+
+    def _target_sender_workers(self):
+        qsize = self.sender_queue.qsize()
+        dynamic_workers = (qsize // self.scale_up_every) + 1
+        dynamic_workers = max(self.min_sender_workers, dynamic_workers)
+        return min(self.max_sender_workers, dynamic_workers)
+
+    def _spawn_sender_worker(self):
+        worker_id = len(self.sender_workers) + 1
+        task = asyncio.create_task(self._sender_worker(worker_id), name=f"tg-sender-{worker_id}")
+        self.sender_workers.append(task)
+
+    async def _start_sender_pool(self):
+        for _ in range(self.min_sender_workers):
+            self._spawn_sender_worker()
+        self.sender_scaler_task = asyncio.create_task(self._sender_scaler(), name="tg-sender-scaler")
+        print(
+            f"[INFO] Pool Telegram iniciado: workers={self.min_sender_workers}-{self.max_sender_workers}, "
+            f"queue_max={self.send_queue_max_size}, pool_size={self.http_pool_size}"
+        )
+
+    async def _stop_sender_pool(self):
+        try:
+            await asyncio.wait_for(self.sender_queue.join(), timeout=self.queue_drain_timeout)
+        except asyncio.TimeoutError:
+            pending = self.sender_queue.qsize()
+            print(f"[WARN] Timeout drenando cola Telegram ({pending} pendientes)")
+
+        if self.sender_scaler_task:
+            self.sender_scaler_task.cancel()
+            try:
+                await self.sender_scaler_task
+            except asyncio.CancelledError:
+                pass
+            self.sender_scaler_task = None
+
+        workers = list(self.sender_workers)
+        for task in workers:
+            task.cancel()
+        for task in workers:
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+        self.sender_workers.clear()
+
+    async def _sender_scaler(self):
+        while not self.shutdown_event.is_set():
+            await asyncio.sleep(1.0)
+            target = self._target_sender_workers()
+            current = len(self.sender_workers)
+            if target > current:
+                for _ in range(target - current):
+                    self._spawn_sender_worker()
+                self._dbg(f"Escalado Telegram workers: {current} -> {len(self.sender_workers)}")
+
+    async def _enqueue_telegram(self, chat_id, text):
+        if self.shutdown_event.is_set():
+            return False
+        try:
+            await asyncio.wait_for(self.sender_queue.put((chat_id, text)), timeout=self.queue_enqueue_timeout)
+            return True
+        except asyncio.TimeoutError:
+            self.dropped_messages += 1
+            if self.dropped_messages == 1 or self.dropped_messages % 50 == 0:
+                print(
+                    f"[WARN] Cola Telegram saturada. Mensajes descartados={self.dropped_messages} "
+                    f"qsize={self.sender_queue.qsize()}/{self.send_queue_max_size}"
+                )
+            return False
+
+    async def _send_telegram_with_retry(self, chat_id, text):
+        max_attempts = 3
+        for attempt in range(1, max_attempts + 1):
+            try:
+                await self.app.bot.send_message(chat_id=chat_id, text=text, parse_mode='HTML')
+                return True
+            except RetryAfter as err:
+                wait_seconds = float(getattr(err, "retry_after", 1.0) or 1.0)
+                await asyncio.sleep(min(wait_seconds, 10.0))
+            except (TimedOut, NetworkError):
+                if attempt < max_attempts:
+                    await asyncio.sleep(min(2 ** (attempt - 1), 4))
+                else:
+                    self.send_failures += 1
+                    if self.send_failures == 1 or self.send_failures % 50 == 0:
+                        print(f"[ERROR] Fallos Telegram acumulados={self.send_failures}")
+                    return False
+            except TelegramError as err:
+                self.send_failures += 1
+                print(f"[ERROR] Telegram send (uid={chat_id}): {err}")
+                return False
+            except Exception as err:
+                self.send_failures += 1
+                print(f"[ERROR] Telegram send inesperado (uid={chat_id}): {err}")
+                return False
+        return False
+
+    async def _sender_worker(self, worker_id):
+        current_task = asyncio.current_task()
+        try:
+            while True:
+                if self.shutdown_event.is_set() and self.sender_queue.empty():
+                    break
+                try:
+                    uid, txt = await asyncio.wait_for(self.sender_queue.get(), timeout=1.0)
+                except asyncio.TimeoutError:
+                    target = self._target_sender_workers()
+                    if len(self.sender_workers) > target and len(self.sender_workers) > self.min_sender_workers:
+                        break
+                    continue
+
+                try:
+                    await self._send_telegram_with_retry(uid, txt)
+                finally:
+                    self.sender_queue.task_done()
+        except asyncio.CancelledError:
+            pass
+        finally:
+            if current_task in self.sender_workers:
+                self.sender_workers.remove(current_task)
+            self._dbg(f"Worker Telegram detenido: {worker_id}")
 
     @staticmethod
     def _get_lang(update):
@@ -336,10 +469,7 @@ class DXBot:
                                     continue
                                 rbn_label = " <b>[RBN]</b>" if is_rbn else ""
                                 txt = get_text('spot', lang, call=dx_call, band=band, mode=mode, freq=freq, comment=clean_comment, rbn_label=rbn_label, time=spot_time, origin=origin)
-                                try:
-                                    await self.app.bot.send_message(chat_id=uid, text=txt, parse_mode='HTML')
-                                except Exception as send_err:
-                                    print(f"[ERROR] Telegram send (uid={uid}): {send_err}")
+                                await self._enqueue_telegram(uid, txt)
                 
                 writer.close()
                 await writer.wait_closed()
@@ -596,6 +726,7 @@ class DXBot:
         
         await self.app.initialize()
         await self.app.start()
+        await self._start_sender_pool()
         await self.app.updater.start_polling()
         print("[INFO] Bot de Telegram iniciado.")
         
@@ -609,6 +740,7 @@ class DXBot:
             print("[INFO] Bot cancelado.")
         finally:
             print("[INFO] Deteniendo bot de Telegram...")
+            await self._stop_sender_pool()
             await self.app.updater.stop()
             await self.app.stop()
             await self.app.shutdown()
